@@ -1,0 +1,18 @@
+{
+  "Burger1332": {
+    "password": "Sergeio228",
+    "uid": "20484",
+    "friends": [
+      "Burger"
+    ],
+    "requests": []
+  },
+  "Burger": {
+    "password": "123456789",
+    "uid": "16879",
+    "friends": [
+      "Burger1332"
+    ],
+    "requests": []
+  }
+}
