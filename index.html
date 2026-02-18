@@ -57,7 +57,6 @@
         .menu-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: #0a0e14; transition: 0.4s; z-index: 2000; padding: 40px 0; border-right: 1px solid var(--glass-border); }
         .menu-drawer.open { left: 0; }
 
-        /* Вьювер */
         #viewer { 
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
             z-index: 5000; flex-direction: column; align-items: center; justify-content: center; 
@@ -118,9 +117,12 @@
 
     <div id="main-app">
         <div class="sidebar" id="sidebar">
-            <div id="sidebar-header-ptr" class="sidebar-header" style="padding:20px; display:flex; gap:15px; align-items:center; background:#111821; border-bottom: 1px solid var(--glass-border);">
+            <div id="sidebar-header-ptr" class="sidebar-header" style="padding:20px; display:flex; gap:10px; align-items:center; background:#111821; border-bottom: 1px solid var(--glass-border);">
                 <div onclick="toggleMenu(true)" style="font-size:26px; cursor:pointer; color:var(--primary)">☰</div>
-                <input type="text" id="user-search" placeholder="ID или имя..." style="flex:1;">
+                <div style="flex:1; display:flex; gap:5px; background:rgba(0,0,0,0.3); border-radius:12px; padding-right:10px; border:1px solid var(--glass-border);">
+                    <input type="text" id="user-search" placeholder="ID или имя..." style="flex:1; border:none; background:transparent;">
+                    <button onclick="search()" style="background:none; padding:0; font-size:18px;">🔍</button>
+                </div>
             </div>
             <div id="section-chats" class="sidebar-content active">
                 <div id="friendList"></div>
@@ -158,10 +160,16 @@
         const socket = io();
         let myData = null, targetUser = "";
 
-        // --- PULL-TO-REFRESH (ТОЛЬКО ХЕДЕР) ---
+        // --- ФУНКЦИЯ ДЛЯ ENTER ---
+        function setEnter(id, func) {
+            document.getElementById(id).addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); func(); }
+            });
+        }
+
+        // --- PULL-TO-REFRESH ---
         let startY = 0;
         let isPtrActive = false;
-
         const handleStart = (e) => { startY = e.touches ? e.touches[0].pageY : e.pageY; isPtrActive = true; };
         const handleMove = (e) => {
             if (!isPtrActive) return;
@@ -188,6 +196,10 @@
             const p = document.getElementById(t==='login'?'l-pass':'r-pass').value.trim();
             if (u && p) socket.emit(t, { login: u, password: p });
         }
+        
+        // ВЕШАЕМ ENTER НА ВХОД
+        setEnter('l-pass', () => auth('login'));
+        setEnter('r-pass', () => auth('register'));
 
         socket.on('auth_success', d => {
             myData = d;
@@ -237,6 +249,9 @@
                 t.value = "";
             }
         }
+        
+        // ВЕШАЕМ ENTER НА СООБЩЕНИЯ
+        setEnter('m-text', send);
 
         function sendImg(input) {
             const file = input.files[0];
@@ -270,6 +285,10 @@
         function saveSettings() { socket.emit('update_settings', { uid: document.getElementById('set-uid').value.trim(), password: document.getElementById('set-pass').value.trim() }); }
         
         function search() { let q = document.getElementById('user-search').value.trim(); if (q) socket.emit('search_user', q); }
+        
+        // ВЕШАЕМ ENTER НА ПОИСК
+        setEnter('user-search', search);
+
         socket.on('search_result', r => { if (r.error) alert(r.error); else if (confirm(`Добавить ${r.login}?`)) socket.emit('send_request', r.login); });
 
         window.onload = () => {
